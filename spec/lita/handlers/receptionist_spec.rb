@@ -15,8 +15,8 @@ describe Lita::Handlers::Receptionist, lita_handler: true do
 
       @redis.flushall
     end
-    
-    context "Add repo"
+
+    context "Add repo" do
       it "registers github repository to handle commits" do
         send_command("add gitcamp repo #{@repo}")
         repos = @redis.get('repos') || []
@@ -27,7 +27,28 @@ describe Lita::Handlers::Receptionist, lita_handler: true do
       it "responds positively" do
         send_command("add gitcamp repo #{@repo}")
         expect(replies.last).to eq(
-          "Repo registered"
+          "Repo added"
+        )
+      end
+    end
+
+    context "Remove repo" do
+      before :each do
+        repos = [@repo,]
+        @redis.set('repos', repos)
+      end
+
+      it "removes github repository from handled" do
+        send_command("remove gitcamp repo #{@repo}")
+        repos = @redis.get('repos') || []
+
+        repos.should_not include(@repo)
+      end
+
+      it "responds positively" do
+        send_command("remove gitcamp repo #{@repo}")
+        expect(replies.last).to eq(
+          "Repo removed"
         )
       end
     end
