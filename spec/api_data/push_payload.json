@@ -18,7 +18,7 @@
          },
          "distinct":true,
          "id":"c441029cf673f84c8b7db52d0a5944ee5c52ff89",
-         "message":"Update #1: 123",
+         "message":"Close #1: 123",
          "modified":[
             "README.md"
          ],
@@ -70,7 +70,7 @@
          },
          "distinct":true,
          "id":"1481a2de7b2a7d02428ad93446ab166be7793fbb",
-         "message":"Update #3: Testing",
+         "message":"Update #4: Testing",
          "modified":[
  
          ],

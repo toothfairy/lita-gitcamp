@@ -1,29 +1,13 @@
 require "spec_helper"
 
 describe Lita::Handlers::Gitcamp, lita_handler: true do
-	describe "Gitcamp" do
-		before do 
-      @repo = "https://github.com/octocat/donuts"
-
-      @redis ||= begin
-        redis = Redis.new
-        Redis::Namespace.new("lita.test:handlers:gitcamp", redis: redis)
-      end
-
-      @redis.flushall
-      @redis.set('repos', [@repo])
-    end
-
-    context "Receive github hook" do
-      it "receives json from github" do
-        routes_http(:post, "/gitcamp").to(:receive)
-      end
-	  end
-	end
+  it "routes properly" do
+    routes_http(:post, "/gitcamp").to(:receive)
+  end
 
   describe "receive github payload" do 
-    let(:robot) { double("Lita::Robot") }
     let(:response) { Rack::Response.new }
+    let(:robot) { double("Lita::Robot") }
 
     subject {Lita::Handlers::Gitcamp.new(robot)}
 
@@ -51,6 +35,18 @@ describe Lita::Handlers::Gitcamp, lita_handler: true do
         subject.receive(request, response)
         expect(true).to be_true
       end
+    end
+  end
+
+  describe "parse closed issues" do
+    let(:payload) {JSON.parse(File.read('./spec/api_data/push_payload.json'))}
+
+    it "returns closed issue numbers" do
+      subject.parse_payload(payload).should eql(["1", "2"])
+    end
+
+    it "doesnt fail on emtpy payload" do
+      subject.parse_payload({}).should eql(nil)
     end
   end
 end
