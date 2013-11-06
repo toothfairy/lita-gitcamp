@@ -5,24 +5,24 @@ require "bcx"
 module Lita
   module Handlers
     class Gitcamp < Handler
-    	http.post "/gitcamp", :receive
+      http.post "/gitcamp", :receive
 
-    	def self.default_config(config)
-    		config.rooms = :all
+      def self.default_config(config)
+        config.rooms = :all
         config.github_token = nil
         config.basecamp_login = nil
         config.basecamp_password = nil
-    		config.basecamp_account = nil
-    	end
+        config.basecamp_account = nil
+      end
 
-    	def receive(request, responce)
+      def receive(request, responce)
         if request.params.has_key? "payload"
           payload = JSON.parse(request.params[:payload])
           colsed_issues, owner, repo = parse_payload payload
           tasks = get_todos_numbers(colsed_issues, owner, repo)
           finish_basecamp_tasks
         end
-    	end
+      end
 
       def parse_payload(payload)
         issues = []
