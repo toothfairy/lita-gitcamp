@@ -10,6 +10,7 @@ module Lita
       def self.default_config(config)
         config.rooms = :all
         config.github_token = nil
+        config.notify_chat = true
         config.basecamp_login = nil
         config.basecamp_password = nil
         config.basecamp_account = nil
@@ -17,10 +18,14 @@ module Lita
 
       def receive(request, responce)
         if request.params.has_key? "payload"
-          payload = JSON.parse(request.params[:payload])
+          payload = JSON.parse(request.params["payload"])
           colsed_issues, owner, repo = parse_payload payload
+
+          return if colsed_issues.empty?
           tasks = get_todos_numbers(colsed_issues, owner, repo)
-          finish_basecamp_tasks
+          return if tasks.empty?
+          finish_basecamp_tasks(tasks)
+          responce.reply "Basecamp tasks closed: #{tasks.count}" if Lita.config.handlers.gitcamp.notify_chat
         end
       end
 
