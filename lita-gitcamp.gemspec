@@ -22,6 +22,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "coveralls"
   spec.add_development_dependency "webmock"
   spec.add_development_dependency "octokit", "~> 2.4.0"
-  spec.add_development_dependency "hashie"
+  spec.add_development_dependency "bcx"
   spec.add_runtime_dependency "redis-namespace", "~> 1.3.0"
 end

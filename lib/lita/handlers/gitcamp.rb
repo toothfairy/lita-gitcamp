@@ -1,6 +1,6 @@
 require "lita"
 require "octokit"
-require "hashie"
+require "bcx"
 
 module Lita
   module Handlers
@@ -10,13 +10,17 @@ module Lita
     	def self.default_config(config)
     		config.rooms = :all
         config.github_token = nil
-    		config.basecamp_token = nil
+        config.basecamp_login = nil
+        config.basecamp_password = nil
+    		config.basecamp_account = nil
     	end
 
     	def receive(request, responce)
         if request.params.has_key? "payload"
           payload = JSON.parse(request.params[:payload])
           colsed_issues, owner, repo = parse_payload payload
+          tasks = get_todos_numbers(colsed_issues, owner, repo)
+          finish_basecamp_tasks
         end
     	end
 
@@ -27,7 +31,7 @@ module Lita
 
           messages = payload["commits"].collect {|c| c["message"]}.join(",")
           issues = messages.scan(regex).flatten
-          
+
           [issues, payload["repository"]["owner"]["name"], payload["repository"]["name"]]
         end
       end
@@ -46,8 +50,28 @@ module Lita
       end
 
       def parse_issue_body(body)
-        regex = /basecamp.com\/\d+\/projects\/\d+(?:-\w*?)\/todos\/(\d+)/mi
-        body.match(regex).captures.first
+        regex = /basecamp.com\/\d+\/projects\/(\d+)(?:-\w*?)\/todos\/(\d+)/mi
+        captures = body.match(regex).captures
+        {project_id: captures[0], task_id: captures[1]}
+      end
+
+      def finish_basecamp_tasks(tasks)
+        client = basecamp_client
+
+        tasks.each do |t|
+          client.projects(t[:project_id]).todos(t[:task_id]).update!(completed: true)
+        end
+      end
+
+      def basecamp_client
+        Bcx.configure do |config|
+          config.account = Lita.config.handlers.gitcamp.basecamp_account
+        end
+        
+        Bcx::Client::HTTP.new(
+          login: Lita.config.handlers.gitcamp.basecamp_login,
+          password: Lita.config.handlers.gitcamp.basecamp_password
+        )
       end
     end
 

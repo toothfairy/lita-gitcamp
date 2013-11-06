@@ -1,4 +1,5 @@
 require "spec_helper"
+require "hashie"
 
 describe Lita::Handlers::Gitcamp, lita_handler: true do
   it "routes properly" do
@@ -19,8 +20,9 @@ describe Lita::Handlers::Gitcamp, lita_handler: true do
       end
 
       it "assepts some github stuff" do
-        subject.receive(request, response)
-        expect(true).to be_true
+        expect {
+          subject.receive(request, response)
+        }.to_not raise_error
       end
     end
 
@@ -51,7 +53,7 @@ describe Lita::Handlers::Gitcamp, lita_handler: true do
   end
 
   describe "todos from issues" do
-    let(:issue_body) {"I'm having a problem with humanity. https://basecamp.com/123123/projects/123123-project/todos/666"}
+    let(:issue_body) {"I'm having a problem with humanity. https://basecamp.com/123123/projects/1-project/todos/2"}
 
     before do
       stub_request(:get, "https://api.github.com/repos/octocat/Hello-World/issues/1347").
@@ -66,11 +68,26 @@ describe Lita::Handlers::Gitcamp, lita_handler: true do
     end
 
     it "get todos numbers" do
-      subject.get_todos_numbers(["1347"], "octocat", "Hello-World").should eql(["666"])
+      subject.get_todos_numbers(["1347"], "octocat", "Hello-World").should eql([{project_id: "1", task_id: "2"} ])
     end
 
     it "parse todos from issue body" do
-      subject.parse_issue_body(issue_body).should eql("666")
+      subject.parse_issue_body(issue_body).should eql({project_id: "1", task_id: "2"})
+    end
+  end
+
+  describe "basecamp todos" do
+    let(:tasks) {[{project_id: "1", task_id: "2"}]}
+
+    before do
+      stub_request(:put, "https://basecamp.com/api/v1/projects/1/todos/2.json").
+         with(:body => "{\"completed\":true}",
+              :headers => {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'User-Agent'=>'Faraday v0.8.8'}).
+         to_return(:status => 200, :body => "", :headers => {})
+    end
+
+    it "close todos" do
+      expect{subject.finish_basecamp_tasks(tasks)}.not_to raise_error
     end
   end
 end
